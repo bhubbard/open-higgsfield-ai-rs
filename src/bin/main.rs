@@ -1,6 +1,7 @@
 use clap::{Parser, Subcommand};
 use open_higgsfield_ai::{
     client::HiggsfieldClient,
+    local::{HardwareProfile, LocalEngine},
     models::{ModelModality, ModelRegistry},
     server::run_server,
     storyboard::{ShotType, Storyboard, StoryboardShot},
@@ -105,6 +106,14 @@ enum Commands {
         /// Dry run: compile and print photographic prompt and camera parameters without submitting
         #[arg(long)]
         dry_run: bool,
+
+        /// Render kinetic preview video locally on this machine using FFmpeg
+        #[arg(long)]
+        local: bool,
+
+        /// Local output path for rendered MP4 video
+        #[arg(long, default_value = "./output/cinema_preview.mp4")]
+        output: PathBuf,
     },
 
     /// ImageStudio: Text-to-Image (T2I) & Image-to-Image (I2I) generation
@@ -197,6 +206,9 @@ enum Commands {
         #[arg(short, long, default_value_t = 3000)]
         port: u16,
     },
+
+    /// Probe local machine hardware & display on-device generative AI acceleration capabilities
+    Hardware,
 }
 
 #[tokio::main]
@@ -288,6 +300,8 @@ async fn main() -> anyhow::Result<()> {
             orbit,
             aspect_ratio,
             dry_run,
+            local,
+            output,
         } => {
             let cam_enum: CinemaCamera = camera.parse()?;
             let lens_enum: CinemaLens = lens.parse()?;
@@ -341,6 +355,13 @@ async fn main() -> anyhow::Result<()> {
 
             if dry_run {
                 println!("\n[Dry Run] Request compiled without submitting to API.");
+                return Ok(());
+            }
+
+            if local {
+                println!("\n🖥️  Rendering kinetic cinema camera preview locally on this machine with FFmpeg...");
+                let out_path = LocalEngine::render_cinema_preview(&req, 5, &output)?;
+                println!("✅ Local video preview rendered successfully at: {}", out_path.display());
                 return Ok(());
             }
 
@@ -500,6 +521,28 @@ async fn main() -> anyhow::Result<()> {
         Commands::Serve { host, port } => {
             let client = build_client().ok();
             run_server(&host, port, client).await?;
+        }
+
+        Commands::Hardware => {
+            let hw = HardwareProfile::probe();
+            println!("\n🖥️  Detected Local Machine Hardware Profile:");
+            println!("------------------------------------------------------------");
+            println!("Chipset:           {}", hw.chip_name);
+            println!("Architecture:      {}", if hw.is_apple_silicon { "Apple Silicon (ARM64)" } else { "x86_64" });
+            println!("Unified Memory:    {} GB", hw.unified_memory_gb);
+            println!("Metal Acceleration:{}", if hw.metal_supported { " YES (Metal 4 / GPU Compute Available)" } else { " NO" });
+            println!("FFmpeg Engine:     {}", if hw.ffmpeg_available { "AVAILABLE (/opt/homebrew/bin/ffmpeg)" } else { "NOT FOUND" });
+            println!("\n⚡ Recommended On-Device Workflows for this machine:");
+            for (i, rec) in hw.recommended_local_models.iter().enumerate() {
+                println!("  {}. {}", i + 1, rec);
+            }
+            println!("\n💡 Local On-Device Execution Options:");
+            println!("  1. Local 1080p Cinema Video Rendering:");
+            println!("     open-higgsfield-ai cinema --prompt \"Cyberpunk street\" --local");
+            println!("  2. Flux.1 Schnell via Apple Silicon MLX (Metal):");
+            println!("     pip install mflux && mflux-generate --model schnell --prompt \"...\"");
+            println!("  3. Real-Time LipSync Animation:");
+            println!("     Wav2Lip / SadTalker ONNX runs locally via CoreML / Metal.");
         }
     }
 

@@ -381,3 +381,34 @@ async fn test_server_router_endpoints() {
     assert!(compile_json["full_prompt"].as_str().unwrap().contains("Cyberpunk hero on motorcycle"));
     assert!(compile_json["camera_spec"].as_str().unwrap().contains("full-frame digital cinema camera"));
 }
+
+#[test]
+fn test_camera_spring_damping() {
+    let spring = open_higgsfield_ai::CameraSpringDamping::cinematic_handheld();
+    let motion = CameraMotion3D {
+        pan_deg: 30.0,
+        tilt_deg: 10.0,
+        roll_deg: 0.0,
+        zoom_scale: 1.5,
+        dolly_m: 2.0,
+        truck_m: 0.0,
+        crane_m: 0.0,
+        orbit_deg: 45.0,
+    };
+
+    let trajectory = spring.smooth_trajectory(&motion, 2.0, 24);
+    assert_eq!(trajectory.len(), 48, "Must generate exactly 48 smoothed frames for 2s at 24fps");
+    assert!(trajectory.first().unwrap().pan_deg.abs() < 5.0, "Initial frame starts near zero");
+    assert!(trajectory.last().unwrap().pan_deg > 20.0, "Final frame approaches target");
+}
+
+#[test]
+fn test_hardware_profile_probing() {
+    let hw = open_higgsfield_ai::HardwareProfile::probe();
+    assert!(!hw.chip_name.is_empty(), "Chip name should be detected");
+    assert!(hw.unified_memory_gb > 0, "Memory should be greater than 0");
+    if hw.is_apple_silicon {
+        assert!(hw.metal_supported, "Metal should be supported on Apple Silicon");
+        assert!(!hw.recommended_local_models.is_empty(), "Should recommend on-device models");
+    }
+}
