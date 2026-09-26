@@ -412,3 +412,57 @@ fn test_hardware_profile_probing() {
         assert!(!hw.recommended_local_models.is_empty(), "Should recommend on-device models");
     }
 }
+
+#[test]
+fn test_local_cinema_preview_rendering() {
+    let hw = open_higgsfield_ai::HardwareProfile::probe();
+    if !hw.ffmpeg_available {
+        eprintln!("FFmpeg not installed, skipping test_local_cinema_preview_rendering");
+        return;
+    }
+
+    let tmp_dir = tempfile::tempdir().expect("create temp dir");
+    let out_file = tmp_dir.path().join("test_cinema.mp4");
+
+    let req = CinemaStudioRequest {
+        prompt: "Tokyo neon cyberpunk street in rain".to_string(),
+        camera: Some(CinemaCamera::Modular8KDigital),
+        lens: Some(CinemaLens::ClassicAnamorphic),
+        focal_length_mm: Some(35),
+        aperture: Some("f/1.4".to_string()),
+        lighting: Some(CinemaLighting::CyberpunkNeon),
+        motion: Some(CameraMotion3D {
+            pan_deg: 10.0,
+            tilt_deg: 5.0,
+            roll_deg: 0.0,
+            zoom_scale: 1.1,
+            dolly_m: 1.0,
+            truck_m: 0.0,
+            crane_m: 0.0,
+            orbit_deg: 0.0,
+        }),
+        aspect_ratio: Some("16:9".to_string()),
+        resolution: Some("1080p".to_string()),
+        seed: None,
+    };
+
+    let sample_image = std::path::Path::new("assets/samples/tokyo_cyberpunk_cinema.jpg");
+    let image_arg = if sample_image.exists() {
+        Some(sample_image)
+    } else {
+        None
+    };
+
+    let result = open_higgsfield_ai::LocalEngine::render_cinema_preview(&req, 2, image_arg, &out_file);
+    assert!(result.is_ok(), "LocalEngine::render_cinema_preview should succeed: {:?}", result.err());
+
+    let rendered_path = result.unwrap();
+    assert!(rendered_path.exists(), "Rendered MP4 file must exist");
+    let file_size = std::fs::metadata(&rendered_path).expect("get metadata").len();
+    assert!(
+        file_size > 50_000,
+        "Rendered MP4 video must not be empty or blank placeholder (got {} bytes)",
+        file_size
+    );
+}
+

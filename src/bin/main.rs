@@ -111,6 +111,10 @@ enum Commands {
         #[arg(long)]
         local: bool,
 
+        /// Optional source image to animate for local kinetic preview
+        #[arg(long)]
+        image: Option<PathBuf>,
+
         /// Local output path for rendered MP4 video
         #[arg(long, default_value = "./output/cinema_preview.mp4")]
         output: PathBuf,
@@ -301,6 +305,7 @@ async fn main() -> anyhow::Result<()> {
             aspect_ratio,
             dry_run,
             local,
+            image,
             output,
         } => {
             let cam_enum: CinemaCamera = camera.parse()?;
@@ -360,7 +365,7 @@ async fn main() -> anyhow::Result<()> {
 
             if local {
                 println!("\n🖥️  Rendering kinetic cinema camera preview locally on this machine with FFmpeg...");
-                let out_path = LocalEngine::render_cinema_preview(&req, 5, &output)?;
+                let out_path = LocalEngine::render_cinema_preview(&req, 5, image.as_deref(), &output)?;
                 println!("✅ Local video preview rendered successfully at: {}", out_path.display());
                 return Ok(());
             }

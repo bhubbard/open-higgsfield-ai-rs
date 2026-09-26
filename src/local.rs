@@ -78,6 +78,7 @@ impl LocalEngine {
     pub fn render_cinema_preview(
         req: &CinemaStudioRequest,
         duration_secs: u32,
+        source_image: Option<&Path>,
         output_file: &Path,
     ) -> Result<PathBuf> {
         let hw = HardwareProfile::probe();
@@ -92,65 +93,117 @@ impl LocalEngine {
         }
 
         let duration = duration_secs.max(1);
+        let frames = duration * 24;
         let motion = req.motion.clone().unwrap_or_default();
         let lighting = req.lighting.unwrap_or(CinemaLighting::CyberpunkNeon);
 
         // Color grade matrix based on lighting preset
         let color_filter = match lighting {
-            CinemaLighting::FilmNoir => "colorchannelmixer=.3:.4:.3:0:.3:.4:.3:0:.3:.4:.3,curves=strong_contrast",
-            CinemaLighting::GoldenHour => "colorbalance=rs=.2:gs=.05:bs=-.2:rm=.15:gm=.05:bm=-.15",
-            CinemaLighting::CyberpunkNeon => "eq=saturation=1.4:contrast=1.2,colorbalance=rs=-.1:gs=.1:bs=.3:rm=.2:gm=-.1:bm=.2",
+            CinemaLighting::FilmNoir => "colorchannelmixer=.35:.45:.2:0:.35:.45:.2:0:.35:.45:.2,curves=strong_contrast",
+            CinemaLighting::GoldenHour => "colorbalance=rs=.25:gs=.08:bs=-.2:rm=.2:gm=.08:bm=-.15",
+            CinemaLighting::CyberpunkNeon => "eq=saturation=1.35:contrast=1.15,colorbalance=rs=-.1:gs=.08:bs=.25:rm=.15:gm=-.05:bm=.2",
             CinemaLighting::NaturalDaylight => "eq=contrast=1.05:saturation=1.05",
-            CinemaLighting::RimLight => "curves=preset=lighter,eq=contrast=1.3:saturation=0.9",
-            CinemaLighting::SoftStudio => "eq=contrast=1.0:saturation=1.1,smartblur=lr=1.2:ls=0.5",
-            CinemaLighting::VolumetricFog => "eq=contrast=0.9:brightness=0.08:saturation=0.9",
-            CinemaLighting::MoodyDusk => "colorbalance=rs=-.1:gs=-.05:bs=.2:rm=-.1:gm=.0:bm=.2",
+            CinemaLighting::RimLight => "curves=preset=lighter,eq=contrast=1.25:saturation=0.95",
+            CinemaLighting::SoftStudio => "eq=contrast=1.02:saturation=1.08,smartblur=lr=1.1:ls=0.4",
+            CinemaLighting::VolumetricFog => "eq=contrast=0.92:brightness=0.06:saturation=0.92",
+            CinemaLighting::MoodyDusk => "colorbalance=rs=-.08:gs=-.04:bs=.18:rm=-.08:gm=.0:bm=.18",
         };
 
-        // Zoom and Pan calculation
-        let zoom_step = ((motion.zoom_scale - 1.0) / ((duration * 24) as f32)).max(-0.01).min(0.01);
-        let pan_x = if motion.pan_deg > 0.0 { "x+1" } else if motion.pan_deg < 0.0 { "x-1" } else { "x" };
+        // Check for source image: passed explicitly or default sample asset
+        let image_input = if let Some(p) = source_image {
+            if p.exists() {
+                Some(p.to_path_buf())
+            } else {
+                None
+            }
+        } else {
+            let default_sample = PathBuf::from("assets/samples/tokyo_cyberpunk_cinema.jpg");
+            if default_sample.exists() {
+                Some(default_sample)
+            } else {
+                None
+            }
+        };
 
-        let filter_chain = format!(
-            "color=c=black:s=1920x1080:d={d},\
-             drawbox=x=0:y=0:w=1920:h=1080:color=#0a0a0a@1.0:t=fill,\
-             drawgrid=w=120:h=120:t=1:color=white@0.08,\
-             drawbox=x=860:y=440:w=200:h=200:color=#06b6d4@0.2:t=fill,\
-             drawbox=x=860:y=440:w=200:h=200:color=#06b6d4@0.8:t=2,\
-             drawbox=x=60:y=60:w=400:h=80:color=#121212@0.8:t=fill,\
-             drawbox=x=60:y=60:w=400:h=80:color=#262626@1.0:t=1,\
-             zoompan=z='min(max(zoom+{zoom_step},1),2)':x='{pan_x}':d={frames}:s=1920x1080,\
-             noise=alls=12:allf=t+u,\
-             {color_filter},\
-             format=yuv420p",
-            d = duration,
-            zoom_step = zoom_step,
-            pan_x = pan_x,
-            frames = duration * 24,
-            color_filter = color_filter
-        );
+        let zoom_step = ((motion.zoom_scale - 1.0) / (frames as f32) * 0.6).max(-0.005).min(0.005);
+        let pan_x = if motion.pan_deg > 0.0 { "x+1.5" } else if motion.pan_deg < 0.0 { "x-1.5" } else { "x" };
+        let tilt_y = if motion.tilt_deg > 0.0 { "y-1.0" } else if motion.tilt_deg < 0.0 { "y+1.0" } else { "y" };
 
-        info!("Rendering local cinematic simulation with FFmpeg to {}", output_file.display());
+        if let Some(ref img_path) = image_input {
+            info!("Rendering cinematic camera motion on image: {}", img_path.display());
+            let vf = format!(
+                "scale=2560x1440:force_original_aspect_ratio=increase,\
+                 crop=2560:1440,\
+                 zoompan=z='min(max(zoom+{zoom_step},1.0),1.4)':x='{pan_x}':y='{tilt_y}':d={frames}:s=1920x1080:fps=24,\
+                 noise=alls=8:allf=t+u,\
+                 {color_filter},\
+                 format=yuv420p"
+            );
 
-        let status = Command::new("ffmpeg")
-            .arg("-y")
-            .arg("-f").arg("lavfi")
-            .arg("-i").arg(filter_chain)
-            .arg("-t").arg(duration.to_string())
-            .arg("-r").arg("24")
-            .arg("-c:v").arg("libx264")
-            .arg("-preset").arg("veryfast")
-            .arg("-crf").arg("20")
-            .arg("-pix_fmt").arg("yuv420p")
-            .arg(output_file)
-            .status()
-            .map_err(|e| Error::Io(e))?;
+            let status = Command::new("ffmpeg")
+                .arg("-y")
+                .arg("-loop").arg("1")
+                .arg("-i").arg(img_path)
+                .arg("-t").arg(duration.to_string())
+                .arg("-vf").arg(vf)
+                .arg("-c:v").arg("libx264")
+                .arg("-preset").arg("veryfast")
+                .arg("-crf").arg("18")
+                .arg("-pix_fmt").arg("yuv420p")
+                .arg(output_file)
+                .status()
+                .map_err(Error::Io)?;
 
-        if !status.success() {
-            return Err(Error::GenerationFailed(format!(
-                "FFmpeg failed with exit code: {:?}",
-                status.code()
-            )));
+            if !status.success() {
+                return Err(Error::GenerationFailed(format!(
+                    "FFmpeg rendering failed with status: {:?}",
+                    status.code()
+                )));
+            }
+        } else {
+            // Render vibrant procedural cityscape
+            let filter_chain = format!(
+                "color=c=#0d0221:s=1920x1080:d={d},\
+                 drawbox=x=0:y=650:w=1920:h=430:color=#050510@1.0:t=fill,\
+                 drawgrid=w=80:h=40:t=2:color=#00f0ff@0.3,\
+                 drawbox=x=150:y=200:w=180:h=550:color=#ff0055@0.5:t=fill,\
+                 drawbox=x=380:y=120:w=240:h=630:color=#00f0ff@0.4:t=fill,\
+                 drawbox=x=700:y=80:w=320:h=670:color=#ffe600@0.3:t=fill,\
+                 drawbox=x=1100:y=180:w=200:h=570:color=#7928ca@0.5:t=fill,\
+                 drawbox=x=1400:y=140:w=260:h=610:color=#ff0055@0.4:t=fill,\
+                 drawbox=x=0:y=520:w=1920:h=8:color=#00f0ff@0.9:t=fill,\
+                 zoompan=z='min(max(zoom+{zoom_step},1.0),1.4)':x='{pan_x}':d={frames}:s=1920x1080,\
+                 noise=alls=10:allf=t+u,\
+                 {color_filter},\
+                 format=yuv420p",
+                d = duration,
+                zoom_step = zoom_step,
+                pan_x = pan_x,
+                frames = frames,
+                color_filter = color_filter
+            );
+
+            info!("Rendering procedural cinematic scene to {}", output_file.display());
+            let status = Command::new("ffmpeg")
+                .arg("-y")
+                .arg("-f").arg("lavfi")
+                .arg("-i").arg(filter_chain)
+                .arg("-t").arg(duration.to_string())
+                .arg("-r").arg("24")
+                .arg("-c:v").arg("libx264")
+                .arg("-preset").arg("veryfast")
+                .arg("-crf").arg("18")
+                .arg("-pix_fmt").arg("yuv420p")
+                .arg(output_file)
+                .status()
+                .map_err(Error::Io)?;
+
+            if !status.success() {
+                return Err(Error::GenerationFailed(format!(
+                    "FFmpeg failed with exit code: {:?}",
+                    status.code()
+                )));
+            }
         }
 
         Ok(output_file.to_path_buf())
