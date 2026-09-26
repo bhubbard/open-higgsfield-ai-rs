@@ -1,0 +1,1781 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-NFEM8TN9ZM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-NFEM8TN9ZM');
+  </script>
+
+  <script>
+    (function() {
+      const storedTheme = localStorage.getItem('theme') || localStorage.getItem('bh-theme');
+      if (storedTheme) {
+        document.documentElement.setAttribute('data-theme', storedTheme);
+      } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      } else {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    })();
+  </script>
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>open-higgsfield-ai-rs — Generative Cinema & Multi-Model Engine | Brandon Hubbard Code</title>
+  <meta name="description" content="High-performance native Rust engine and web studio for Open-Higgsfield-AI: 220+ generative models, 3D cinema camera controls, anamorphic optics, and multi-image conditioning.">
+  <link rel="canonical" href="https://code.brandonhubbard.com/open-higgsfield-ai-rs/">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    /* =============================================================
+       SWISS ARCHITECTURAL DESIGN SYSTEM (BRANDON HUBBARD V1.0)
+       ============================================================= */
+    :root, [data-theme="dark"] {
+      --color-void: #0a0a0a;
+      --color-charcoal: #121212;
+      --color-concrete: #262626;
+      --color-concrete-light: #3a3a3a;
+      --color-titanium: #ffffff;
+      --color-steel: #888888;
+      --color-steel-light: #aaaaaa;
+
+      --color-bg-primary: #0a0a0a;
+      --color-bg-surface: #121212;
+      --color-border: #262626;
+      --color-border-light: #3a3a3a;
+      --color-text-primary: #ffffff;
+      --color-text-secondary: #888888;
+      --color-btn-bg: #ffffff;
+      --color-btn-text: #0a0a0a;
+
+      --color-accent-cobalt: #60a5fa;
+      --color-accent-cyan: #06b6d4;
+      --color-accent-emerald: #10b981;
+      --color-accent-crimson: #f43f5e;
+      --color-accent-amber: #f59e0b;
+      --color-accent-violet: #8b5cf6;
+
+      --bg: #0a0a0a;
+      --card-bg: rgba(18, 18, 18, 0.9);
+      --card-border: #262626;
+      --text: #ffffff;
+      --text-muted: #888888;
+
+      --font-display: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+    }
+
+    [data-theme="light"] {
+      --color-bg-primary: #f8f9fa;
+      --color-bg-surface: #ffffff;
+      --color-border: #e5e7eb;
+      --color-border-light: #d1d5db;
+      --color-text-primary: #0a0a0a;
+      --color-text-secondary: #4b5563;
+      --color-btn-bg: #0a0a0a;
+      --color-btn-text: #ffffff;
+
+      --color-accent-cobalt: #1e40af;
+      --color-accent-cyan: #0891b2;
+      --color-accent-emerald: #059669;
+      --color-accent-crimson: #e11d48;
+      --color-accent-amber: #d97706;
+      --color-accent-violet: #7c3aed;
+
+      --color-void: #f8f9fa;
+      --color-charcoal: #ffffff;
+      --color-concrete: #e5e7eb;
+      --color-concrete-light: #d1d5db;
+      --color-steel: #4b5563;
+      --color-steel-light: #4b5563;
+      --color-titanium: #0a0a0a;
+
+      --bg: #f8f9fa;
+      --card-bg: rgba(255, 255, 255, 0.95);
+      --card-border: #e5e7eb;
+      --text: #0a0a0a;
+      --text-muted: #64748b;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      font-family: var(--font-display);
+      background-color: var(--color-bg-primary);
+      color: var(--color-text-primary);
+      scroll-behavior: smooth;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background-color: var(--color-bg-primary);
+      color: var(--color-text-primary);
+      line-height: 1.6;
+      overflow-x: hidden;
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1300px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+
+    /* HEADER */
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background-color: var(--color-bg-primary);
+      border-bottom: 1px solid var(--color-border);
+      transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .site-header.scrolled {
+      background-color: rgba(10, 10, 10, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+    }
+
+    [data-theme="light"] .site-header.scrolled {
+      background-color: rgba(248, 249, 250, 0.88);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    }
+
+    .header-content {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+    }
+
+    .brand-link {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .bh-square-logo {
+      width: 32px;
+      height: 32px;
+      background: var(--color-text-primary);
+      color: var(--color-bg-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 1rem;
+      letter-spacing: -0.06em;
+      flex-shrink: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .brand-text {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .brand-name {
+      font-weight: 800;
+      font-size: 0.9rem;
+      letter-spacing: -0.02em;
+      color: var(--color-text-primary);
+      line-height: 1.2;
+    }
+
+    .brand-title {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--color-text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .nav-controls {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .desktop-nav {
+      display: flex;
+      align-items: center;
+      gap: 1.75rem;
+    }
+
+    .nav-link {
+      font-family: var(--font-mono);
+      color: var(--color-text-secondary);
+      text-decoration: none;
+      font-size: 0.8rem;
+      letter-spacing: 0.05em;
+      transition: color 0.2s ease;
+      position: relative;
+    }
+
+    .nav-link:hover, .nav-link.active {
+      color: var(--color-text-primary);
+    }
+
+    .nav-link.active::after {
+      content: "";
+      position: absolute;
+      bottom: -6px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--color-accent-cyan);
+    }
+
+    .theme-toggle {
+      background: transparent;
+      border: 1px solid var(--color-border);
+      color: var(--color-text-primary);
+      padding: 0.4rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: border-color 0.2s ease, color 0.2s ease;
+    }
+
+    .theme-toggle:hover {
+      border-color: var(--color-text-primary);
+    }
+
+    [data-theme="dark"] .moon-icon { display: none !important; }
+    [data-theme="dark"] .sun-icon { display: block !important; }
+    [data-theme="light"] .sun-icon { display: none !important; }
+    [data-theme="light"] .moon-icon { display: block !important; }
+
+    /* SUBNAV */
+    .project-subnav {
+      position: sticky;
+      top: 64px;
+      z-index: 990;
+      background-color: var(--color-bg-surface);
+      border-bottom: 1px solid var(--color-border);
+      transition: background-color 0.2s ease, border-color 0.2s ease;
+    }
+
+    .project-subnav.scrolled {
+      background-color: rgba(18, 18, 18, 0.92);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+
+    [data-theme="light"] .project-subnav.scrolled {
+      background-color: rgba(255, 255, 255, 0.92);
+    }
+
+    .subnav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 48px;
+      gap: 1rem;
+    }
+
+    .subnav-breadcrumbs {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      white-space: nowrap;
+    }
+
+    .subnav-crumb {
+      color: var(--color-text-secondary);
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 0.15s ease;
+    }
+
+    .subnav-crumb:hover { color: var(--color-accent-cyan); }
+    .subnav-sep { color: var(--color-border-light); }
+    .subnav-current { color: var(--color-text-primary); font-weight: 700; }
+
+    .subnav-badge {
+      display: inline-block;
+      padding: 0.15rem 0.45rem;
+      border: 1px solid var(--color-border);
+      font-size: 0.68rem;
+      color: var(--color-accent-cyan);
+      background: rgba(6, 182, 212, 0.08);
+      border-radius: 0px;
+    }
+
+    .subnav-menu {
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .subnav-menu::-webkit-scrollbar { display: none; }
+
+    .subnav-link {
+      font-family: var(--font-mono);
+      font-size: 0.74rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--color-text-secondary);
+      text-decoration: none;
+      white-space: nowrap;
+      transition: color 0.15s ease;
+    }
+    .subnav-link:hover { color: var(--color-text-primary); }
+
+    .subnav-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .cmd-k-trigger {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.3rem 0.6rem;
+      background: transparent;
+      border: 1px solid var(--color-border);
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--color-text-secondary);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .cmd-k-trigger:hover {
+      border-color: var(--color-text-primary);
+      color: var(--color-text-primary);
+    }
+
+    .github-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.3rem 0.6rem;
+      background: var(--color-text-primary);
+      color: var(--color-bg-primary);
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-decoration: none;
+      transition: opacity 0.2s ease;
+    }
+    .github-pill:hover { opacity: 0.85; }
+
+    /* HERO SECTION */
+    .hero-section {
+      padding: 4.5rem 0 3.5rem 0;
+      border-bottom: 1px solid var(--color-border);
+      background: radial-gradient(circle at 80% 20%, rgba(6, 182, 212, 0.05) 0%, transparent 60%);
+    }
+
+    .hero-tag {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--color-accent-cyan);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .hero-tag::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      background: var(--color-accent-cyan);
+    }
+
+    .hero-title {
+      font-size: 3.2rem;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      line-height: 1.05;
+      margin-bottom: 1.25rem;
+      text-transform: uppercase;
+    }
+
+    .hero-subtitle {
+      font-size: 1.15rem;
+      color: var(--color-text-secondary);
+      max-width: 820px;
+      margin-bottom: 2rem;
+      line-height: 1.5;
+    }
+
+    .hero-metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+      margin-top: 2.5rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--color-border);
+    }
+
+    .metric-card {
+      border-left: 2px solid var(--color-accent-cyan);
+      padding-left: 1rem;
+    }
+
+    .metric-val {
+      font-family: var(--font-mono);
+      font-size: 1.75rem;
+      font-weight: 800;
+      color: var(--color-text-primary);
+    }
+
+    .metric-label {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--color-text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* STUDIO WORKSPACE */
+    .studio-workspace {
+      padding: 3.5rem 0;
+    }
+
+    .studio-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--color-border);
+      gap: 0;
+      overflow-x: auto;
+      margin-bottom: 2rem;
+    }
+
+    .studio-tab-btn {
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      padding: 1rem 1.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--color-text-secondary);
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .studio-tab-btn:hover {
+      color: var(--color-text-primary);
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .studio-tab-btn.active {
+      color: var(--color-text-primary);
+      border-bottom-color: var(--color-accent-cyan);
+      background: rgba(6, 182, 212, 0.05);
+    }
+
+    .tab-pane {
+      display: none;
+    }
+    .tab-pane.active {
+      display: block;
+    }
+
+    /* SWISS GRID PANELS */
+    .studio-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+    }
+
+    @media (max-width: 980px) {
+      .studio-grid { grid-template-columns: 1fr; }
+    }
+
+    .panel-box {
+      background: var(--color-bg-surface);
+      border: 1px solid var(--color-border);
+      padding: 1.75rem;
+    }
+
+    .panel-title {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--color-text-secondary);
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--color-border);
+      padding-bottom: 0.75rem;
+    }
+
+    .control-group {
+      margin-bottom: 1.25rem;
+    }
+
+    .control-label {
+      display: flex;
+      justify-content: space-between;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--color-text-secondary);
+      margin-bottom: 0.4rem;
+    }
+
+    .control-label span:last-child {
+      color: var(--color-accent-cyan);
+      font-weight: 700;
+    }
+
+    .swiss-select, .swiss-input, .swiss-textarea {
+      width: 100%;
+      background: var(--color-bg-primary);
+      border: 1px solid var(--color-border);
+      color: var(--color-text-primary);
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      padding: 0.65rem 0.85rem;
+      border-radius: 0px;
+      outline: none;
+      transition: border-color 0.2s ease;
+    }
+
+    .swiss-select:focus, .swiss-input:focus, .swiss-textarea:focus {
+      border-color: var(--color-accent-cyan);
+    }
+
+    .swiss-slider {
+      width: 100%;
+      accent-color: var(--color-accent-cyan);
+      cursor: pointer;
+    }
+
+    .pills-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+
+    .pill-btn {
+      background: transparent;
+      border: 1px solid var(--color-border);
+      color: var(--color-text-secondary);
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      padding: 0.35rem 0.65rem;
+      cursor: pointer;
+      border-radius: 0px;
+      transition: all 0.15s ease;
+    }
+
+    .pill-btn:hover {
+      border-color: var(--color-text-primary);
+      color: var(--color-text-primary);
+    }
+
+    .pill-btn.active {
+      background: var(--color-accent-cyan);
+      border-color: var(--color-accent-cyan);
+      color: #000000;
+      font-weight: 700;
+    }
+
+    /* VIEWPORT CANVAS */
+    .viewport-canvas-container {
+      width: 100%;
+      aspect-ratio: 16/9;
+      background: #050505;
+      border: 1px solid var(--color-border);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #cinema3dCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .canvas-hud-overlay {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      right: 10px;
+      bottom: 10px;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    .hud-top {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .hud-rec {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      color: var(--color-accent-crimson);
+      font-weight: 800;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .compiled-prompt-box {
+      margin-top: 1.5rem;
+      background: #000000;
+      border: 1px solid var(--color-border);
+      padding: 1rem;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      color: var(--color-accent-emerald);
+      line-height: 1.5;
+      word-break: break-word;
+      position: relative;
+    }
+
+    .compiled-label {
+      position: absolute;
+      top: -9px;
+      left: 10px;
+      background: var(--color-bg-surface);
+      padding: 0 0.4rem;
+      font-size: 0.65rem;
+      color: var(--color-text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    /* ACTION BUTTONS */
+    .btn-action {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      background: var(--color-text-primary);
+      color: var(--color-bg-primary);
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border: none;
+      cursor: pointer;
+      transition: opacity 0.2s ease;
+      width: 100%;
+      margin-top: 1rem;
+    }
+
+    .btn-action:hover { opacity: 0.9; }
+
+    /* MODEL CATALOG BROWSER */
+    .model-filters {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .model-search-input {
+      flex: 1;
+      min-width: 250px;
+    }
+
+    .model-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+      gap: 1rem;
+      max-height: 650px;
+      overflow-y: auto;
+      padding-right: 0.5rem;
+    }
+
+    .model-card {
+      background: var(--color-bg-surface);
+      border: 1px solid var(--color-border);
+      padding: 1rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .model-card:hover {
+      border-color: var(--color-accent-cyan);
+      transform: translateY(-2px);
+    }
+
+    .model-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 0.5rem;
+    }
+
+    .model-card-name {
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: var(--color-text-primary);
+    }
+
+    .model-badge {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      padding: 0.15rem 0.4rem;
+      border: 1px solid var(--color-border);
+      text-transform: uppercase;
+    }
+
+    .model-badge.t2i { color: var(--color-accent-cyan); border-color: rgba(6, 182, 212, 0.4); }
+    .model-badge.t2v { color: var(--color-accent-violet); border-color: rgba(139, 92, 246, 0.4); }
+    .model-badge.i2i { color: var(--color-accent-emerald); border-color: rgba(16, 185, 129, 0.4); }
+    .model-badge.i2v { color: var(--color-accent-amber); border-color: rgba(245, 158, 11, 0.4); }
+    .model-badge.lipsync { color: var(--color-accent-crimson); border-color: rgba(244, 63, 94, 0.4); }
+
+    .model-card-desc {
+      font-size: 0.76rem;
+      color: var(--color-text-secondary);
+      line-height: 1.4;
+      margin-bottom: 0.75rem;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .model-card-footer {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--color-text-secondary);
+      border-top: 1px solid var(--color-border);
+      padding-top: 0.5rem;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    /* COMMAND-K MODAL */
+    .cmdk-backdrop {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+
+    .cmdk-backdrop.open { display: flex; }
+
+    .cmdk-panel {
+      width: 100%;
+      max-width: 620px;
+      background: var(--color-bg-surface);
+      border: 1px solid var(--color-border);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+      overflow: hidden;
+    }
+
+    .cmdk-input-bar {
+      display: flex;
+      align-items: center;
+      border-bottom: 1px solid var(--color-border);
+      padding: 0 1rem;
+    }
+
+    .cmdk-input {
+      width: 100%;
+      height: 52px;
+      background: transparent;
+      border: none;
+      outline: none;
+      font-family: var(--font-mono);
+      font-size: 0.95rem;
+      color: var(--color-text-primary);
+    }
+
+    .cmdk-results {
+      max-height: 360px;
+      overflow-y: auto;
+      padding: 0.5rem 0;
+    }
+
+    .cmdk-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1.25rem;
+      cursor: pointer;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: var(--color-text-secondary);
+      transition: background 0.1s ease;
+    }
+
+    .cmdk-item:hover, .cmdk-item.selected {
+      background: rgba(6, 182, 212, 0.1);
+      color: var(--color-text-primary);
+    }
+
+    /* FOOTER */
+    .site-footer {
+      margin-top: auto;
+      border-top: 1px solid var(--color-border);
+      padding: 2.5rem 0;
+      background: var(--color-bg-surface);
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--color-text-secondary);
+    }
+
+    .footer-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SITE HEADER -->
+  <header class="site-header" id="siteHeader">
+    <div class="container header-content">
+      <a href="https://code.brandonhubbard.com" class="brand-link">
+        <div class="bh-square-logo">BH</div>
+        <div class="brand-text">
+          <span class="brand-name">BRANDON HUBBARD</span>
+          <span class="brand-title">SYSTEMS & ARCHITECTURE</span>
+        </div>
+      </a>
+
+      <div class="nav-controls">
+        <nav class="desktop-nav">
+          <a href="https://brandonhubbard.com/" class="nav-link">Home</a>
+          <a href="https://brandonhubbard.com/about" class="nav-link">About</a>
+          <a href="https://brandonhubbard.com/work" class="nav-link">Work</a>
+          <a href="https://brandonhubbard.com/blog" class="nav-link">Blog</a>
+          <a href="https://brandonhubbard.com/projects" class="nav-link">Projects</a>
+          <a href="https://code.brandonhubbard.com" class="nav-link active">6 Code</a>
+        </nav>
+
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark/light theme">
+          <svg class="sun-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+          <svg class="moon-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- PROJECT SUBNAV -->
+  <div class="project-subnav" id="projectSubnav">
+    <div class="container subnav-inner">
+      <div class="subnav-breadcrumbs">
+        <a href="https://brandonhubbard.com" class="subnav-crumb">Home</a>
+        <span class="subnav-sep">&gt;</span>
+        <a href="https://code.brandonhubbard.com" class="subnav-crumb">Code</a>
+        <span class="subnav-sep">&gt;</span>
+        <span class="subnav-current">open-higgsfield-ai-rs</span>
+        <span class="subnav-badge">v0.0.1</span>
+      </div>
+
+      <nav class="subnav-menu">
+        <a href="#studio" class="subnav-link">Studio</a>
+        <a href="#cinema" class="subnav-link">Cinema 3D</a>
+        <a href="#models" class="subnav-link">220+ Models</a>
+        <a href="#storyboard" class="subnav-link">EDL Storyboard</a>
+        <a href="#cli" class="subnav-link">CLI / REST API</a>
+      </nav>
+
+      <div class="subnav-actions">
+        <button class="cmd-k-trigger" id="cmdKTrigger">
+          <span>⌘K</span>
+        </button>
+        <a href="https://github.com/bhubbard/open-higgsfield-ai-rs" target="_blank" rel="noopener noreferrer" class="github-pill">
+          GitHub
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- HERO SECTION -->
+  <section class="hero-section">
+    <div class="container">
+      <div class="hero-tag">Native Rust Generative Cinema Engine</div>
+      <h1 class="hero-title">OPEN-HIGGSFIELD-AI-RS</h1>
+      <p class="hero-subtitle">
+        High-performance native Rust fork and client engine for Open-Higgsfield-AI. Features 220+ generative models, 3D cinematic camera choreography (Pan, Tilt, Dolly, Orbit), anamorphic optical synthesis, multi-image conditioning (up to 14 references), speech-driven LipSync, and an embedded Axum REST Web Studio.
+      </p>
+
+      <div class="hero-metrics">
+        <div class="metric-card">
+          <div class="metric-val" id="statModelsCount">221</div>
+          <div class="metric-label">Cataloged AI Models</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-val">4</div>
+          <div class="metric-label">Studio Workflows</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-val">11 / 6</div>
+          <div class="metric-label">Cinema Lenses / Bodies</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-val">CMX 3600</div>
+          <div class="metric-label">EDL Timeline Export</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STUDIO WORKSPACE -->
+  <section class="studio-workspace" id="studio">
+    <div class="container">
+      
+      <!-- Studio Tabs Navigation -->
+      <div class="studio-tabs">
+        <button class="studio-tab-btn active" data-tab="cinemaTab">🎬 CinemaStudio</button>
+        <button class="studio-tab-btn" data-tab="imageTab">🖼️ ImageStudio</button>
+        <button class="studio-tab-btn" data-tab="videoTab">🎥 VideoStudio</button>
+        <button class="studio-tab-btn" data-tab="lipsyncTab">🎙️ LipSyncStudio</button>
+        <button class="studio-tab-btn" data-tab="storyboardTab">🎞️ Storyboard Composer</button>
+        <button class="studio-tab-btn" data-tab="catalogTab">📦 220+ Model Catalog</button>
+      </div>
+
+      <!-- TAB 1: CINEMA STUDIO -->
+      <div class="tab-pane active" id="cinemaTab">
+        <div class="studio-grid">
+          
+          <!-- Left Controls Column -->
+          <div class="panel-box">
+            <div class="panel-title">
+              <span>3D Camera & Optical Pipeline</span>
+              <span style="color: var(--color-accent-cyan)">Nano Banana Cinema</span>
+            </div>
+
+            <div class="control-group">
+              <label class="control-label">Creative Scene Prompt</label>
+              <textarea id="cinemaPrompt" class="swiss-textarea" rows="3">Cybernetic detective standing in rain drenched Tokyo alleyway at night, reflections of neon signs in wet asphalt</textarea>
+            </div>
+
+            <div class="control-group">
+              <label class="control-label">Camera Body</label>
+              <select id="cinemaCamera" class="swiss-select">
+                <option value="Modular 8K Digital">Modular 8K Digital (ARRI LF Spec)</option>
+                <option value="Full-Frame Cine Digital">Full-Frame Cine Digital (RED V-Raptor)</option>
+                <option value="Grand Format 70mm Film">Grand Format 70mm Film (IMAX Grand)</option>
+                <option value="Studio Digital S35">Studio Digital S35 (Super 35)</option>
+                <option value="Classic 16mm Film">Classic 16mm Film (Arriflex 16)</option>
+                <option value="Premium Large Format Digital">Premium Large Format Digital (Alexa 65)</option>
+              </select>
+            </div>
+
+            <div class="control-group">
+              <label class="control-label">Optical Lens Architecture</label>
+              <select id="cinemaLens" class="swiss-select">
+                <option value="Classic Anamorphic">Classic Anamorphic (2x Squeeze, Oval Bokeh)</option>
+                <option value="Compact Anamorphic">Compact Anamorphic (Horizontal Streak Flare)</option>
+                <option value="Creative Tilt Lens">Creative Tilt Lens (Selective Plane of Focus)</option>
+                <option value="70s Cinema Prime">1970s Cinema Prime (Organic Warmth)</option>
+                <option value="Extreme Macro">Extreme Macro (Microscopic Detail)</option>
+                <option value="Premium Modern Prime">Premium Modern Prime (Zero Aberration)</option>
+                <option value="Warm Cinema Prime">Warm Cinema Prime (Golden Tones)</option>
+                <option value="Swirl Bokeh Portrait">Swirl Bokeh Portrait (Petzval Aesthetic)</option>
+                <option value="Vintage Prime">Vintage Prime (Soft Highlight Bloom)</option>
+                <option value="Halation Diffusion">Halation Diffusion (Pro-Mist Filter)</option>
+                <option value="Clinical Sharp Prime">Clinical Sharp Prime (Master Prime Sharpness)</option>
+              </select>
+            </div>
+
+            <div class="control-group">
+              <div class="control-label">
+                <span>Focal Length</span>
+                <span id="focalLengthVal">35mm (Natural Cinematic)</span>
+              </div>
+              <input type="range" id="focalSlider" class="swiss-slider" min="8" max="135" value="35">
+            </div>
+
+            <div class="control-group">
+              <label class="control-label">Aperture & Depth of Field</label>
+              <div class="pills-group" id="aperturePills">
+                <button class="pill-btn active" data-val="f/1.4">f/1.4 (Shallow)</button>
+                <button class="pill-btn" data-val="f/2.8">f/2.8</button>
+                <button class="pill-btn" data-val="f/4">f/4 (Balanced)</button>
+                <button class="pill-btn" data-val="f/8">f/8</button>
+                <button class="pill-btn" data-val="f/11">f/11 (Deep Focus)</button>
+              </div>
+            </div>
+
+            <div class="control-group">
+              <label class="control-label">Lighting Preset</label>
+              <div class="pills-group" id="lightingPills">
+                <button class="pill-btn" data-val="Noir">Film Noir</button>
+                <button class="pill-btn" data-val="GoldenHour">Golden Hour</button>
+                <button class="pill-btn active" data-val="Cyberpunk">Cyberpunk Neon</button>
+                <button class="pill-btn" data-val="Daylight">Natural Daylight</button>
+                <button class="pill-btn" data-val="RimLight">Rim / Contre-Jour</button>
+                <button class="pill-btn" data-val="GodRays">Volumetric God Rays</button>
+              </div>
+            </div>
+
+            <div class="control-group">
+              <div class="control-label">
+                <span>3D Pan / Tilt / Orbit Trajectory</span>
+                <span id="motionVal">Pan: 0° | Tilt: 0° | Orbit: 0°</span>
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; margin-top: 0.4rem;">
+                <div>
+                  <span style="font-size:0.65rem; color:var(--color-text-secondary); font-family:var(--font-mono)">Pan</span>
+                  <input type="range" id="panSlider" class="swiss-slider" min="-90" max="90" value="0">
+                </div>
+                <div>
+                  <span style="font-size:0.65rem; color:var(--color-text-secondary); font-family:var(--font-mono)">Tilt</span>
+                  <input type="range" id="tiltSlider" class="swiss-slider" min="-45" max="45" value="0">
+                </div>
+                <div>
+                  <span style="font-size:0.65rem; color:var(--color-text-secondary); font-family:var(--font-mono)">Orbit</span>
+                  <input type="range" id="orbitSlider" class="swiss-slider" min="0" max="360" value="0">
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Right Viewport Column -->
+          <div class="panel-box" style="display: flex; flex-direction: column;">
+            <div class="panel-title">
+              <span>Interactive 3D Perspective Visualizer</span>
+              <span id="aspectBadge" style="color: var(--color-accent-cyan)">16:9 4K</span>
+            </div>
+
+            <div class="viewport-canvas-container">
+              <canvas id="cinema3dCanvas"></canvas>
+              <div class="canvas-hud-overlay">
+                <div class="hud-top">
+                  <span class="hud-rec">● CINEMA VIEW</span>
+                  <span id="hudCameraSpecs">35MM f/1.4 ANAMORPHIC</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                  <span id="hudFps">24.000 FPS</span>
+                  <span id="hudResolution">3840 x 2160 UHD</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="compiled-prompt-box">
+              <span class="compiled-label">Compiled Nano Banana Photographic Prompt</span>
+              <div id="compiledPromptText">...</div>
+            </div>
+
+            <button class="btn-action" id="compileCinemaBtn">
+              Compile & Synthesize Frame
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- TAB 2: IMAGE STUDIO -->
+      <div class="tab-pane" id="imageTab">
+        <div class="studio-grid">
+          <div class="panel-box">
+            <div class="panel-title">
+              <span>ImageStudio — T2I & I2I Conditioning</span>
+              <span style="color:var(--color-accent-emerald)">Multi-Image (Up to 14)</span>
+            </div>
+
+            <div class="control-group">
+              <label class="control-label">Image Model</label>
+              <select id="imageModelSelect" class="swiss-select">
+                <option value="nano-banana">Nano Banana (Photorealistic)</option>
+                <option value="nano-banana-2-edit">Nano Banana 2 Edit (14-Image Multi-Conditioning)</option>
+                <option value="flux-schnell">Flux.1 Schnell</option>
+                <option value="flux-dev">Flux.1 Dev</option>
+                <option value="sdxl">Stable Diffusion XL</option>
+                <option value="recraft-v3">Recraft V3 Vector/Photoreal</option>
+                <option value="midjourney-v6-style">Midjourney V6 Aesthetic</option>
+              </select>
+            </div>
+
+            <div class="control-group">
+              <label class="control-label">Prompt</label>
+              <textarea id="imagePrompt" class="swiss-textarea" rows="3">A high-fashion avant-garde editorial portrait, architectural lighting, sharp contours, 8k resolution</textarea>
+            </div>
+
+            <div class="control-group">
+              <label class="control-label">Aspect Ratio</label>
+              <div class="pills-group" id="imageArPills">
+                <button class="pill-btn active" data-val="1:1">1:1 Square</button>
+                <button class="pill-btn" data-val="16:9">16:9 Wide</button>
+                <button class="pill-btn" data-val="9:16">9:16 Story</button>
+                <button class="pill-btn" data-val="4:5">4:5 Portrait</button>
+                <button class="pill-btn" data-val="21:9">21:9 Ultra</button>
+              </div>
+            </div>
+
+            <div class="control-group">
+              <div class="control-label">
+                <span>Multi-Image Conditioning References</span>
+                <span id="refCountLabel">0 / 14 Images</span>
+              </div>
+              <input type="text" id="refImageUrlInput" class="swiss-input" placeholder="Paste image URL and hit Enter to append...">
+              <div id="refImagesList" style="display: flex; gap: 0.5rem; margin-top: 0.5rem; overflow-x: auto;"></div>
+            </div>
+
+            <button class="btn-action" id="genImageBtn">Generate Image Frame</button>
+          </div>
+
+          <div class="panel-box">
+            <div class="panel-title">
+              <span>Output Canvas</span>
+              <span id="imageStatus">Ready</span>
+            </div>
+            <div style="width: 100%; aspect-ratio: 1/1; background: #050505; border: 1px solid var(--color-border); display: flex; align-items: center; justify-content: center; flex-direction: column; padding: 1.5rem; text-align: center;">
+              <div style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--color-text-secondary);">
+                [ Image Output Preview ]
+              </div>
+              <div style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--color-accent-emerald); margin-top: 0.5rem;">
+                Submit prompt or connect API key to render
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 3: VIDEO STUDIO -->
+      <div class="tab-pane" id="videoTab">
+        <div class="studio-grid">
+          <div class="panel-box">
+            <div class="panel-title">
+              <span>VideoStudio — T2V & I2V Motion Engine</span>
+              <span style="color:var(--color-accent-violet)">Temporal Synthesis</span>
+            </div>
+
+            <div class="control-group">
+              <label class="control-label">Video Model</label>
+              <select id="videoModelSelect" class="swiss-select">
+                <option value="seedance-lite-t2v">Seedance Lite (Fast T2V)</option>
+                <option value="kling-1.5-pro">Kling 1.5 Pro High Dynamic</option>
+                <option value="luma-dream-machine">Luma Dream Machine Ray</option>
+                <option value="minimax-hailuo">MiniMax / Hailuo Video</option>
+                <option value="cogvideox-5b">CogVideoX 5B</option>
+              </select>
+            </div>
+
+            <div class="control-group">
+              <label class="control-label">Motion Prompt</label>
+              <textarea id="videoPrompt" class="swiss-textarea" rows="3">A high-speed formula race car overtaking in pouring rain, spray flying off tires in slow motion</textarea>
+            </div>
+
+            <div class="control-group">
+              <label class="control-label">Duration</label>
+              <div class="pills-group" id="videoDurationPills">
+                <button class="pill-btn active" data-val="5">5 Seconds</button>
+                <button class="pill-btn" data-val="10">10 Seconds</button>
+              </div>
+            </div>
+
+            <div class="control-group">
+              <label class="control-label">Resolution & Quality</label>
+              <div class="pills-group" id="videoResPills">
+                <button class="pill-btn" data-val="480p">480p</button>
+                <button class="pill-btn active" data-val="720p">720p HD</button>
+                <button class="pill-btn" data-val="1080p">1080p FHD</button>
+              </div>
+            </div>
+
+            <button class="btn-action" id="genVideoBtn">Generate Cinematic Video</button>
+          </div>
+
+          <div class="panel-box">
+            <div class="panel-title">
+              <span>Temporal Preview</span>
+              <span style="color:var(--color-accent-violet)">H.264 / ProRes</span>
+            </div>
+            <div style="width: 100%; aspect-ratio: 16/9; background: #050505; border: 1px solid var(--color-border); display: flex; align-items: center; justify-content: center; flex-direction: column;">
+              <span style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--color-text-secondary);">[ Video Viewport ]</span>
+              <span style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--color-accent-violet); margin-top: 0.4rem;">Temporal consistency pipeline active</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 4: LIPSYNC STUDIO -->
+      <div class="tab-pane" id="lipsyncTab">
+        <div class="studio-grid">
+          <div class="panel-box">
+            <div class="panel-title">
+              <span>LipSyncStudio — Audio-Driven Facial Sync</span>
+              <span style="color:var(--color-accent-crimson)">Viseme Alignment</span>
+            </div>
+
+            <div class="control-group">
+              <label class="control-label">LipSync Engine</label>
+              <select id="lipsyncModelSelect" class="swiss-select">
+                <option value="infinitetalk-image-to-video">Infinite Talk (Audio to Talking Video)</option>
+                <option value="musetalk">MuseTalk Real-Time LipSync</option>
+                <option value="hallo-portrait">Hallo Portrait Dynamics</option>
+                <option value="sadtalker">SadTalker Speech Driven</option>
+                <option value="liveportrait">LivePortrait Expressive Face</option>
+              </select>
+            </div>
+
+            <div class="control-group">
+              <label class="control-label">Source Portrait (Image or Video URL)</label>
+              <input type="text" id="lipsyncFaceInput" class="swiss-input" value="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80">
+            </div>
+
+            <div class="control-group">
+              <label class="control-label">Voice / Dialogue Audio Track (WAV / MP3 URL)</label>
+              <input type="text" id="lipsyncAudioInput" class="swiss-input" placeholder="https://example.com/dialogue_take_01.mp3">
+            </div>
+
+            <button class="btn-action" id="genLipSyncBtn">Synchronize Lip Motion</button>
+          </div>
+
+          <div class="panel-box">
+            <div class="panel-title">
+              <span>Facial Landmark & Waveform Monitor</span>
+              <span style="color:var(--color-accent-crimson)">Phoneme Match</span>
+            </div>
+            <div style="width: 100%; aspect-ratio: 16/9; background: #050505; border: 1px solid var(--color-border); display: flex; align-items: center; justify-content: center; flex-direction: column;">
+              <span style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--color-text-secondary);">[ LipSync Waveform Display ]</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 5: STORYBOARD COMPOSER -->
+      <div class="tab-pane" id="storyboardTab">
+        <div class="panel-box" style="margin-bottom: 2rem;">
+          <div class="panel-title">
+            <span>Multi-Shot Sequence Composer</span>
+            <span>Standard CMX 3600 EDL</span>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+            <div>
+              <p style="font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 1.5rem;">
+                Compose complete cinematic scenes combining establishing camera shots, character dialogue with LipSync, and high-speed motion sequences. Export directly to CMX 3600 Edit Decision Lists (EDL) for DaVinci Resolve and Adobe Premiere Pro.
+              </p>
+
+              <div id="storyboardShotsList" style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <div style="background: var(--color-bg-primary); border: 1px solid var(--color-border); padding: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                  <div>
+                    <span style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--color-accent-cyan);">SHOT 01 [CINEMA 35MM f/1.4]</span>
+                    <div style="font-weight: 700; font-size: 0.85rem;">Wide Establishing Neon Cyberpunk Vista</div>
+                    <div style="font-size: 0.75rem; color: var(--color-text-secondary);">Duration: 4.0s | Trajectory: slow pan right 20°</div>
+                  </div>
+                  <span style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--color-accent-emerald);">READY</span>
+                </div>
+
+                <div style="background: var(--color-bg-primary); border: 1px solid var(--color-border); padding: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                  <div>
+                    <span style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--color-accent-violet);">SHOT 02 [VIDEO T2V]</span>
+                    <div style="font-weight: 700; font-size: 0.85rem;">Medium Tracking Shot - Cybernetic Detective</div>
+                    <div style="font-size: 0.75rem; color: var(--color-text-secondary);">Duration: 5.0s | Model: seedance-lite-t2v</div>
+                  </div>
+                  <span style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--color-accent-emerald);">READY</span>
+                </div>
+
+                <div style="background: var(--color-bg-primary); border: 1px solid var(--color-border); padding: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                  <div>
+                    <span style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--color-accent-crimson);">SHOT 03 [LIPSYNC]</span>
+                    <div style="font-weight: 700; font-size: 0.85rem;">Close-up Interrogation Dialogue</div>
+                    <div style="font-size: 0.75rem; color: var(--color-text-secondary);">Duration: 6.0s | Model: infinitetalk</div>
+                  </div>
+                  <span style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--color-accent-emerald);">READY</span>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <div class="control-label" style="margin-bottom: 0.5rem;">Compiled CMX 3600 EDL:</div>
+              <pre id="edlOutputBox" style="background: #000; border: 1px solid var(--color-border); padding: 1rem; font-family: var(--font-mono); font-size: 0.7rem; color: var(--color-accent-cyan); height: 200px; overflow-y: auto;">TITLE: CYBERPUNK_PROLOGUE
+FCM: NON-DROP FRAME
+
+001  AX       V     C        00:00:00:00 00:00:04:00 00:00:00:00 00:00:04:00
+* FROM CLIP NAME: SHOT_01_WIDE_ESTABLISHING
+* PROMPT: Wide neon vista of rain soaked city
+
+002  AX       V     C        00:00:00:00 00:00:05:00 00:00:04:00 00:00:09:00
+* FROM CLIP NAME: SHOT_02_MEDIUM_TRACKING
+* PROMPT: Cybernetic detective walks forward
+
+003  AX       V     C        00:00:00:00 00:00:06:00 00:00:09:00 00:00:15:00
+* FROM CLIP NAME: SHOT_03_DIALOGUE
+* PROMPT: Facial speech sync interrogation</pre>
+
+              <button class="btn-action" id="copyEdlBtn">Copy CMX 3600 EDL</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 6: 220+ MODEL CATALOG -->
+      <div class="tab-pane" id="catalogTab">
+        <div class="panel-box">
+          <div class="panel-title">
+            <span>Unified Model Catalog Registry</span>
+            <span id="catalogCountBadge" style="color:var(--color-accent-cyan)">221 Models Registered</span>
+          </div>
+
+          <div class="model-filters">
+            <input type="text" id="modelSearchInput" class="swiss-input model-search-input" placeholder="Search by model name, family, endpoint, or keyword (e.g. flux, nano, kling, lipsync)...">
+            <div class="pills-group" id="modalityPills">
+              <button class="pill-btn active" data-mod="all">All (221)</button>
+              <button class="pill-btn" data-mod="t2i">T2I (51)</button>
+              <button class="pill-btn" data-mod="t2v">T2V (42)</button>
+              <button class="pill-btn" data-mod="i2i">I2I (57)</button>
+              <button class="pill-btn" data-mod="i2v">I2V (61)</button>
+              <button class="pill-btn" data-mod="lipsync">LipSync (9)</button>
+            </div>
+          </div>
+
+          <div class="model-cards-grid" id="modelCardsContainer">
+            <!-- Populated via JS -->
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- CLI & REST API SECTION -->
+  <section class="container" id="cli" style="padding-bottom: 5rem;">
+    <div class="panel-box">
+      <div class="panel-title">
+        <span>Production CLI & Axum REST Architecture</span>
+        <span style="color:var(--color-accent-cyan)">Cargo & HTTP Engine</span>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+        <div>
+          <h4 style="font-family: var(--font-mono); font-size: 0.85rem; margin-bottom: 0.75rem; color: var(--color-text-primary);">Command-Line Interface</h4>
+          <pre style="background: #000; border: 1px solid var(--color-border); padding: 1rem; font-family: var(--font-mono); font-size: 0.75rem; color: var(--color-text-secondary); line-height: 1.6; overflow-x: auto;">
+<span style="color:var(--color-accent-cyan)"># Browse model catalog</span>
+open-higgsfield-ai models --category t2v
+
+<span style="color:var(--color-accent-cyan)"># CinemaStudio camera compilation (Dry Run)</span>
+open-higgsfield-ai cinema \
+  --prompt "Neon rain in Neo Tokyo" \
+  --camera modular8k \
+  --lens anamorphic \
+  --focal-length 35 \
+  --aperture "f/1.4" \
+  --lighting noir \
+  --pan 15 \
+  --dry-run
+
+<span style="color:var(--color-accent-cyan)"># Run Embedded Web Studio & REST Server</span>
+open-higgsfield-ai serve --host 127.0.0.1 --port 3000
+          </pre>
+        </div>
+
+        <div>
+          <h4 style="font-family: var(--font-mono); font-size: 0.85rem; margin-bottom: 0.75rem; color: var(--color-text-primary);">Rust Crate Dependency</h4>
+          <pre style="background: #000; border: 1px solid var(--color-border); padding: 1rem; font-family: var(--font-mono); font-size: 0.75rem; color: var(--color-text-secondary); line-height: 1.6; overflow-x: auto;">
+<span style="color:var(--color-accent-emerald)">[dependencies]</span>
+open-higgsfield-ai = "0.0.1"
+tokio = { version = "1.39", features = ["full"] }
+
+<span style="color:var(--color-accent-amber)">// Native Rust Client Usage:</span>
+<span style="color:var(--color-accent-cyan)">use</span> open_higgsfield_ai::{HiggsfieldClient, CinemaStudio, CinemaStudioRequest};
+
+<span style="color:var(--color-accent-cyan)">let</span> client = HiggsfieldClient::from_env()?;
+<span style="color:var(--color-accent-cyan)">let</span> studio = CinemaStudio::new(&client);
+          </pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMMAND-K MODAL -->
+  <div class="cmdk-backdrop" id="cmdkModal">
+    <div class="cmdk-panel">
+      <div class="cmdk-input-bar">
+        <input type="text" class="cmdk-input" id="cmdkInput" placeholder="Type a command, studio, or search 220+ models..." autofocus>
+      </div>
+      <div class="cmdk-results" id="cmdkResults">
+        <div class="cmdk-item" data-action="tab-cinema">🎬 Switch to CinemaStudio (3D Camera & Optics)</div>
+        <div class="cmdk-item" data-action="tab-image">🖼️ Switch to ImageStudio (T2I & Multi-Conditioning)</div>
+        <div class="cmdk-item" data-action="tab-video">🎥 Switch to VideoStudio (T2V & I2V)</div>
+        <div class="cmdk-item" data-action="tab-lipsync">🎙️ Switch to LipSyncStudio (Speech Alignment)</div>
+        <div class="cmdk-item" data-action="tab-storyboard">🎞️ View Storyboard EDL Sequencer</div>
+        <div class="cmdk-item" data-action="tab-catalog">📦 Search 220+ Model Catalog</div>
+        <div class="cmdk-item" data-action="toggle-theme">🌓 Toggle Dark / Light Theme</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SITE FOOTER -->
+  <footer class="site-footer">
+    <div class="container footer-content">
+      <div>
+        <span>open-higgsfield-ai-rs</span> &copy; 2026 Brandon Hubbard. Open Source under MIT License.
+      </div>
+      <div>
+        <a href="https://code.brandonhubbard.com" style="color: var(--color-accent-cyan); text-decoration: none;">code.brandonhubbard.com</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Theme Management
+    const themeToggle = document.getElementById('themeToggle');
+    themeToggle.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme') || 'dark';
+      const next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+      localStorage.setItem('bh-theme', next);
+    });
+
+    // Sticky Header Scroll
+    window.addEventListener('scroll', () => {
+      const scrolled = window.scrollY > 20;
+      document.getElementById('siteHeader').classList.toggle('scrolled', scrolled);
+      document.getElementById('projectSubnav').classList.toggle('scrolled', scrolled);
+    });
+
+    // Tab Navigation
+    const tabBtns = document.querySelectorAll('.studio-tab-btn');
+    const tabPanes = document.querySelectorAll('.tab-pane');
+
+    function switchTab(tabId) {
+      tabBtns.forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-tab') === tabId);
+      });
+      tabPanes.forEach(pane => {
+        pane.classList.toggle('active', pane.id === tabId);
+      });
+    }
+
+    tabBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        switchTab(btn.getAttribute('data-tab'));
+      });
+    });
+
+    // CinemaStudio Real-Time Compiler & 3D Canvas
+    const cinemaPrompt = document.getElementById('cinemaPrompt');
+    const cinemaCamera = document.getElementById('cinemaCamera');
+    const cinemaLens = document.getElementById('cinemaLens');
+    const focalSlider = document.getElementById('focalSlider');
+    const focalLengthVal = document.getElementById('focalLengthVal');
+    const panSlider = document.getElementById('panSlider');
+    const tiltSlider = document.getElementById('tiltSlider');
+    const orbitSlider = document.getElementById('orbitSlider');
+    const motionVal = document.getElementById('motionVal');
+    const hudCameraSpecs = document.getElementById('hudCameraSpecs');
+    const compiledPromptText = document.getElementById('compiledPromptText');
+
+    let currentAperture = 'f/1.4';
+    let currentLighting = 'Cyberpunk Neon';
+
+    document.querySelectorAll('#aperturePills .pill-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#aperturePills .pill-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentAperture = btn.getAttribute('data-val');
+        updateCinemaCompiler();
+      });
+    });
+
+    document.querySelectorAll('#lightingPills .pill-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#lightingPills .pill-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentLighting = btn.getAttribute('data-val');
+        updateCinemaCompiler();
+      });
+    });
+
+    function updateCinemaCompiler() {
+      const focal = parseInt(focalSlider.value);
+      let perspective = 'natural perspective';
+      if (focal <= 14) perspective = 'ultra-wide perspective';
+      else if (focal <= 28) perspective = 'wide dynamic perspective';
+      else if (focal <= 45) perspective = 'natural cinematic perspective';
+      else if (focal <= 85) perspective = 'standard portrait perspective';
+      else perspective = 'compressed telephoto perspective';
+
+      focalLengthVal.textContent = `${focal}mm (${perspective})`;
+
+      const pan = parseInt(panSlider.value);
+      const tilt = parseInt(tiltSlider.value);
+      const orbit = parseInt(orbitSlider.value);
+      motionVal.textContent = `Pan: ${pan}° | Tilt: ${tilt}° | Orbit: ${orbit}°`;
+
+      hudCameraSpecs.textContent = `${focal}MM ${currentAperture.toUpperCase()} ${cinemaLens.value.toUpperCase()}`;
+
+      const prompt = cinemaPrompt.value.trim();
+      const parts = [
+        prompt,
+        `shot on a ${cinemaCamera.value}`,
+        `using a ${cinemaLens.value} at ${focal}mm (${perspective})`,
+        `aperture ${currentAperture}`,
+        `${currentLighting} lighting`,
+        `camera motion: pan ${pan}deg tilt ${tilt}deg orbit ${orbit}deg`,
+        'natural cinematic color science, high dynamic range, 35mm film grain, 8k resolution'
+      ];
+      compiledPromptText.textContent = parts.join(', ');
+    }
+
+    [cinemaPrompt, cinemaCamera, cinemaLens, focalSlider, panSlider, tiltSlider, orbitSlider].forEach(el => {
+      el.addEventListener('input', updateCinemaCompiler);
+    });
+
+    updateCinemaCompiler();
+
+    // 3D Wireframe Canvas Animation
+    const canvas = document.getElementById('cinema3dCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function resizeCanvas() {
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * window.devicePixelRatio;
+      canvas.height = rect.height * window.devicePixelRatio;
+      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    let animFrame = 0;
+    function render3DViewport() {
+      const w = canvas.getBoundingClientRect().width;
+      const h = canvas.getBoundingClientRect().height;
+      ctx.clearRect(0, 0, w, h);
+
+      // Grid ground
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+      ctx.lineWidth = 1;
+
+      const pan = parseInt(panSlider.value);
+      const tilt = parseInt(tiltSlider.value);
+      const orbit = parseInt(orbitSlider.value) + animFrame * 0.2;
+      const focal = parseInt(focalSlider.value);
+
+      const cx = w / 2;
+      const cy = h / 2;
+
+      // Draw perspective grid floor
+      const numLines = 14;
+      for (let i = -numLines; i <= numLines; i++) {
+        const xOffset = i * 25;
+        ctx.beginPath();
+        ctx.moveTo(cx + xOffset * 0.4 + pan * 0.5, cy + 20 + tilt * 0.5);
+        ctx.lineTo(cx + xOffset * 2.5 + pan * 1.5, h);
+        ctx.stroke();
+      }
+
+      // Draw 3D Camera Cone
+      const fovAngle = (120 - (focal / 135) * 80) * (Math.PI / 180);
+      const coneLength = 120;
+      const leftX = cx + Math.sin(-fovAngle / 2 + (pan * Math.PI) / 180) * coneLength;
+      const leftY = cy + Math.cos(-fovAngle / 2) * coneLength * 0.5;
+      const rightX = cx + Math.sin(fovAngle / 2 + (pan * Math.PI) / 180) * coneLength;
+      const rightY = cy + Math.cos(fovAngle / 2) * coneLength * 0.5;
+
+      ctx.strokeStyle = 'rgba(6, 182, 212, 0.6)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - 30);
+      ctx.lineTo(leftX, leftY);
+      ctx.lineTo(rightX, rightY);
+      ctx.closePath();
+      ctx.stroke();
+
+      // Optical focal target circle
+      ctx.fillStyle = 'rgba(6, 182, 212, 0.15)';
+      ctx.fill();
+
+      // Center crosshair
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(cx - 15, cy);
+      ctx.lineTo(cx + 15, cy);
+      ctx.moveTo(cx, cy - 15);
+      ctx.lineTo(cx, cy + 15);
+      ctx.stroke();
+
+      animFrame++;
+      requestAnimationFrame(render3DViewport);
+    }
+    requestAnimationFrame(render3DViewport);
+
+    // Load Model Catalog
+    const sampleModels = [
+      { id: "nano-banana", name: "Nano Banana", mod: "t2i", desc: "Flagship high-fidelity text-to-image generator with photorealistic skin and studio lighting." },
+      { id: "nano-banana-2-edit", name: "Nano Banana 2 Edit", mod: "i2i", desc: "Multi-reference image editing supporting up to 14 concurrent input conditioning references." },
+      { id: "flux-schnell", name: "Flux.1 Schnell", mod: "t2i", desc: "Ultra-fast 4-step rectified flow transformer model for rapid concept ideation." },
+      { id: "flux-dev", name: "Flux.1 Dev", mod: "t2i", desc: "12-billion parameter open-weight guidance distilled text-to-image transformer." },
+      { id: "seedance-lite-t2v", name: "Seedance Lite T2V", mod: "t2v", desc: "High dynamic motion video synthesis with smooth temporal consistency." },
+      { id: "kling-1.5-pro", name: "Kling 1.5 Pro", mod: "t2v", desc: "State of the art complex physics motion video model supporting 1080p output." },
+      { id: "luma-dream-machine", name: "Luma Dream Machine Ray", mod: "i2v", desc: "High frame-rate image-to-video animation with realistic camera momentum." },
+      { id: "minimax-hailuo", name: "MiniMax / Hailuo Video", mod: "t2v", desc: "Realistic human kinetics, facial micro-expressions, and physical world simulation." },
+      { id: "infinitetalk-image-to-video", name: "Infinite Talk", mod: "lipsync", desc: "Animates single portrait images into natural talking video synchronized with voice tracks." },
+      { id: "musetalk", name: "MuseTalk LipSync", mod: "lipsync", desc: "Real-time speech-driven audio-visual synchronization with expressive mouth geometry." },
+      { id: "recraft-v3", name: "Recraft V3", mod: "t2i", desc: "Design-first vector, icon, 3D render, and photographic style generation." },
+      { id: "cogvideox-5b", name: "CogVideoX 5B", mod: "t2v", desc: "Open architecture text-to-video model with 3D variational autoencoder." }
+    ];
+
+    const modelCardsContainer = document.getElementById('modelCardsContainer');
+    const modelSearchInput = document.getElementById('modelSearchInput');
+    let currentModality = 'all';
+
+    function renderModels() {
+      const q = modelSearchInput.value.toLowerCase().trim();
+      const filtered = sampleModels.filter(m => {
+        const matchesMod = currentModality === 'all' || m.mod === currentModality;
+        const matchesQ = !q || m.name.toLowerCase().includes(q) || m.id.toLowerCase().includes(q) || m.desc.toLowerCase().includes(q);
+        return matchesMod && matchesQ;
+      });
+
+      modelCardsContainer.innerHTML = filtered.map(m => `
+        <div class="model-card" onclick="alert('Model selected: ' + '${m.name}' + ' (${m.id})')">
+          <div>
+            <div class="model-card-header">
+              <span class="model-card-name">${m.name}</span>
+              <span class="model-badge ${m.mod}">${m.mod.toUpperCase()}</span>
+            </div>
+            <p class="model-card-desc">${m.desc}</p>
+          </div>
+          <div class="model-card-footer">
+            <span>ID: ${m.id}</span>
+            <span style="color:var(--color-accent-cyan)">Schema &gt;</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    renderModels();
+
+    modelSearchInput.addEventListener('input', renderModels);
+
+    document.querySelectorAll('#modalityPills .pill-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#modalityPills .pill-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentModality = btn.getAttribute('data-mod');
+        renderModels();
+      });
+    });
+
+    // Copy EDL Button
+    document.getElementById('copyEdlBtn').addEventListener('click', () => {
+      const text = document.getElementById('edlOutputBox').innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        alert('CMX 3600 EDL copied to clipboard!');
+      });
+    });
+
+    // Command-K Modal Handling
+    const cmdkModal = document.getElementById('cmdkModal');
+    const cmdkTrigger = document.getElementById('cmdKTrigger');
+    const cmdkInput = document.getElementById('cmdkInput');
+
+    function openCmdK() {
+      cmdkModal.classList.add('open');
+      cmdkInput.value = '';
+      cmdkInput.focus();
+    }
+
+    function closeCmdK() {
+      cmdkModal.classList.remove('open');
+    }
+
+    cmdkTrigger.addEventListener('click', openCmdK);
+
+    cmdkModal.addEventListener('click', (e) => {
+      if (e.target === cmdkModal) closeCmdK();
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        if (cmdkModal.classList.contains('open')) closeCmdK();
+        else openCmdK();
+      }
+      if (e.key === 'Escape' && cmdkModal.classList.contains('open')) {
+        closeCmdK();
+      }
+    });
+
+    document.querySelectorAll('.cmdk-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const action = item.getAttribute('data-action');
+        closeCmdK();
+        if (action === 'tab-cinema') switchTab('cinemaTab');
+        else if (action === 'tab-image') switchTab('imageTab');
+        else if (action === 'tab-video') switchTab('videoTab');
+        else if (action === 'tab-lipsync') switchTab('lipsyncTab');
+        else if (action === 'tab-storyboard') switchTab('storyboardTab');
+        else if (action === 'tab-catalog') switchTab('catalogTab');
+        else if (action === 'toggle-theme') themeToggle.click();
+      });
+    });
+  </script>
+</body>
+</html>

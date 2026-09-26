@@ -1,0 +1,35 @@
+[package]
+name = "open-higgsfield-ai"
+version = "0.0.1"
+edition = "2021"
+authors = ["Brandon Hubbard <bhubbard@users.noreply.github.com>"]
+description = "Native Rust engine and studio client for Open-Higgsfield-AI: 220+ image, video, lipsync, and cinema camera models with Axum web studio and CLI."
+license = "MIT"
+repository = "https://github.com/bhubbard/open-higgsfield-ai-rs"
+homepage = "https://code.brandonhubbard.com/open-higgsfield-ai-rs/"
+readme = "README.md"
+keywords = ["higgsfield", "generative-ai", "cinema", "video-generation", "lipsync"]
+categories = ["multimedia::video", "web-programming::http-server", "command-line-utilities"]
+
+[lib]
+name = "open_higgsfield_ai"
+path = "src/lib.rs"
+
+[[bin]]
+name = "open-higgsfield-ai"
+path = "src/bin/main.rs"
+
+[dependencies]
+tokio = { version = "1.39", features = ["full"] }
+axum = { version = "0.7", features = ["json", "multipart"] }
+tower = { version = "0.4", features = ["util"] }
+tower-http = { version = "0.5", features = ["cors", "trace", "fs"] }
+reqwest = { version = "0.12", default-features = false, features = ["json", "multipart", "rustls-tls", "stream"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+clap = { version = "4.5", features = ["derive", "env"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+thiserror = "1.0"
+anyhow = "1.0"
+futures-util = "0.3"
