@@ -58,6 +58,8 @@ pub struct Model {
     pub has_prompt: Option<bool>,
     #[serde(rename = "imageField")]
     pub image_field: Option<String>,
+    #[serde(rename = "maxImages")]
+    pub max_images: Option<usize>,
     #[serde(default)]
     pub inputs: HashMap<String, serde_json::Value>,
 }
@@ -65,6 +67,10 @@ pub struct Model {
 impl Model {
     pub fn resolved_endpoint(&self) -> &str {
         self.endpoint.as_deref().unwrap_or(&self.id)
+    }
+
+    pub fn max_images(&self) -> usize {
+        self.max_images.unwrap_or(1)
     }
 
     pub fn aspect_ratios(&self) -> Vec<String> {
@@ -107,6 +113,58 @@ impl Model {
             }
         }
         vec!["720p".to_string(), "1080p".to_string()]
+    }
+
+    pub fn modes(&self) -> Vec<String> {
+        if let Some(mode_val) = self.inputs.get("mode") {
+            if let Some(arr) = mode_val.get("enum").and_then(|v| v.as_array()) {
+                return arr.iter().filter_map(|v| v.as_str().map(ToString::to_string)).collect();
+            }
+        }
+        Vec::new()
+    }
+
+    pub fn qualities(&self) -> Vec<String> {
+        if let Some(q_val) = self.inputs.get("quality") {
+            if let Some(arr) = q_val.get("enum").and_then(|v| v.as_array()) {
+                return arr.iter().filter_map(|v| v.as_str().map(ToString::to_string)).collect();
+            }
+        }
+        Vec::new()
+    }
+
+    pub fn quality_field(&self) -> Option<&'static str> {
+        if self.inputs.contains_key("resolution") {
+            Some("resolution")
+        } else if self.inputs.contains_key("quality") {
+            Some("quality")
+        } else {
+            None
+        }
+    }
+
+    pub fn default_aspect_ratio(&self) -> Option<String> {
+        self.inputs
+            .get("aspect_ratio")
+            .and_then(|v| v.get("default"))
+            .and_then(|v| v.as_str())
+            .map(ToString::to_string)
+    }
+
+    pub fn default_duration(&self) -> Option<u32> {
+        self.inputs
+            .get("duration")
+            .and_then(|v| v.get("default"))
+            .and_then(|v| v.as_u64())
+            .map(|n| n as u32)
+    }
+
+    pub fn default_resolution(&self) -> Option<String> {
+        self.inputs
+            .get("resolution")
+            .and_then(|v| v.get("default"))
+            .and_then(|v| v.as_str())
+            .map(ToString::to_string)
     }
 }
 
@@ -160,6 +218,7 @@ impl ModelRegistry {
                 let description = val.get("description").and_then(|v| v.as_str()).map(|s| s.to_string());
                 let has_prompt = val.get("hasPrompt").and_then(|v| v.as_bool());
                 let image_field = val.get("imageField").and_then(|v| v.as_str()).map(|s| s.to_string());
+                let max_images = val.get("maxImages").and_then(|v| v.as_u64()).map(|n| n as usize);
 
                 let inputs: HashMap<String, serde_json::Value> = val
                     .get("inputs")
@@ -177,6 +236,7 @@ impl ModelRegistry {
                     description,
                     has_prompt,
                     image_field,
+                    max_images,
                     inputs,
                 };
 

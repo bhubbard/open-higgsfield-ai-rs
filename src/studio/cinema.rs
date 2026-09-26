@@ -341,6 +341,88 @@ pub fn compile_cinema_prompt(req: &CinemaStudioRequest) -> CompiledCinemaPrompt 
     }
 }
 
+/// Direct 1:1 port of `buildNanoBananaPrompt` from Open-Higgsfield-AI studio.
+pub fn build_nano_banana_prompt(
+    base_prompt: &str,
+    camera: &str,
+    lens: &str,
+    focal_length: u32,
+    aperture: &str,
+) -> String {
+    let camera_desc = match camera.to_lowercase().replace(['-', '_', ' '], "").as_str() {
+        "modular8kdigital" | "modular8k" => "modular 8K digital cinema camera",
+        "fullframecinedigital" | "fullframe" | "cine" => "full-frame digital cinema camera",
+        "grandformat70mmfilm" | "70mm" | "grandformat" => "grand format 70mm film camera",
+        "studiodigitals35" | "s35" | "super35" => "Super 35 studio digital camera",
+        "classic16mmfilm" | "16mm" => "classic 16mm film camera",
+        "premiumlargeformatdigital" | "largeformat" => "premium large-format digital cinema camera",
+        _ => camera,
+    };
+
+    let lens_desc = match lens.to_lowercase().replace(['-', '_', ' '], "").as_str() {
+        "creativetiltlens" | "tilt" | "tiltshift" => "creative tilt lens effect",
+        "compactanamorphic" => "compact anamorphic lens",
+        "extrememacro" | "macro" => "extreme macro lens",
+        "70scinemaprime" | "vintage70s" => "1970s cinema prime lens",
+        "classicanamorphic" | "anamorphic" => "classic anamorphic lens",
+        "premiummodernprime" | "modernprime" => "premium modern prime lens",
+        "warmcinemaprime" | "warmprime" => "warm-toned cinema prime lens",
+        "swirlbokehportrait" | "swirlbokeh" | "petzval" => "swirl bokeh portrait lens",
+        "vintageprime" => "vintage prime lens",
+        "halationdiffusion" | "promist" | "halation" => "halation diffusion filter",
+        "clinicalsharpprime" | "sharp" => "ultra-sharp clinical prime lens",
+        _ => lens,
+    };
+
+    let perspective = match focal_length {
+        8 => "ultra-wide perspective",
+        14 => "wide-angle perspective",
+        24 => "wide-angle dynamic perspective",
+        35 => "natural cinematic perspective",
+        50 => "standard portrait perspective",
+        85 => "classic portrait perspective",
+        _ => "",
+    };
+
+    let depth_effect = match aperture {
+        "f/1.4" => "shallow depth of field, creamy bokeh",
+        "f/4" => "balanced depth of field",
+        "f/11" => "deep focus clarity, sharp foreground to background",
+        _ => "",
+    };
+
+    let quality_tags = "professional photography, ultra-detailed, 8K resolution";
+
+    let perspective_part = if perspective.is_empty() {
+        format!("{focal_length}mm")
+    } else {
+        format!("{focal_length}mm ({perspective})")
+    };
+
+    let camera_part = format!("shot on a {camera_desc}");
+    let lens_part = format!("using a {lens_desc} at {perspective_part}");
+    let aperture_part = format!("aperture {aperture}");
+
+    let parts = [
+        base_prompt.trim(),
+        camera_part.as_str(),
+        lens_part.as_str(),
+        aperture_part.as_str(),
+        depth_effect,
+        "cinematic lighting",
+        "natural color science",
+        "high dynamic range",
+        quality_tags,
+    ];
+
+    parts
+        .iter()
+        .filter(|p| !p.trim().is_empty())
+        .copied()
+        .collect::<Vec<_>>()
+        .join(", ")
+}
+
 pub struct CinemaStudio<'a> {
     client: &'a HiggsfieldClient,
 }

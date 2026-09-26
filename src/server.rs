@@ -6,7 +6,7 @@ use crate::studio::{
     LipSyncStudio, LipSyncStudioRequest, VideoStudio, VideoStudioRequest,
 };
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Multipart, Path, Query, State},
     http::StatusCode,
     response::Html,
     routing::{get, post},
@@ -51,6 +51,7 @@ pub fn create_router(state: AppState) -> Router {
         .route("/api/generate/cinema", post(generate_cinema_handler))
         .route("/api/generate/lipsync", post(generate_lipsync_handler))
         .route("/api/storyboard/compile", post(compile_storyboard_handler))
+        .route("/api/upload", post(upload_handler))
         .layer(cors)
         .layer(TraceLayer::new_for_http())
         .with_state(state)
@@ -213,6 +214,49 @@ async fn compile_storyboard_handler(
         "edl_cmx3600": edl,
         "storyboard": storyboard
     }))
+}
+
+async fn upload_handler(
+    State(state): State<AppState>,
+    mut multipart: Multipart,
+) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
+    let client = state.client.ok_or_else(|| {
+        (
+            StatusCode::PRECONDITION_REQUIRED,
+            Json(json!({"error": "No API key configured on server."})),
+        )
+    })?;
+
+    while let Some(field) = multipart.next_field().await.map_err(|e| {
+        (StatusCode::BAD_REQUEST, Json(json!({"error": e.to_string()})))
+    })? {
+        let name = field.name().unwrap_or("file").to_string();
+        if name == "file" || name == "asset" {
+            let file_name = field.file_name().unwrap_or("upload.bin").to_string();
+            let content_type = field.content_type().map(|s| s.to_string());
+            let data = field.bytes().await.map_err(|e| {
+                (StatusCode::BAD_REQUEST, Json(json!({"error": e.to_string()})))
+            })?;
+
+            let uploaded_url = client
+                .upload_file(&file_name, data.to_vec(), content_type.as_deref())
+                .await
+                .map_err(|e| {
+                    (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()})))
+                })?;
+
+            return Ok(Json(json!({
+                "status": "success",
+                "url": uploaded_url,
+                "file_name": file_name
+            })));
+        }
+    }
+
+    Err((
+        StatusCode::BAD_REQUEST,
+        Json(json!({"error": "No file field found in multipart upload"})),
+    ))
 }
 
 pub async fn run_server(host: &str, port: u16, client: Option<HiggsfieldClient>) -> anyhow::Result<()> {

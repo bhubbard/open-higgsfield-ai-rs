@@ -11,7 +11,7 @@ pub use models::{Model, ModelModality, ModelRegistry};
 pub use server::run_server;
 pub use storyboard::{ShotType, Storyboard, StoryboardShot};
 pub use studio::{
-    compile_cinema_prompt, CameraMotion3D, CinemaCamera, CinemaLens, CinemaLighting, CinemaStudio,
-    CinemaStudioRequest, CompiledCinemaPrompt, ImageStudio, ImageStudioRequest, LipSyncStudio,
-    LipSyncStudioRequest, VideoStudio, VideoStudioRequest,
+    build_nano_banana_prompt, compile_cinema_prompt, CameraMotion3D, CinemaCamera, CinemaLens,
+    CinemaLighting, CinemaStudio, CinemaStudioRequest, CompiledCinemaPrompt, ImageStudio,
+    ImageStudioRequest, LipSyncStudio, LipSyncStudioRequest, VideoStudio, VideoStudioRequest,
 };

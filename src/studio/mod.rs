@@ -4,8 +4,8 @@ pub mod lipsync;
 pub mod video;
 
 pub use cinema::{
-    compile_cinema_prompt, CameraMotion3D, CinemaCamera, CinemaLens, CinemaLighting, CinemaStudio,
-    CinemaStudioRequest, CompiledCinemaPrompt,
+    build_nano_banana_prompt, compile_cinema_prompt, CameraMotion3D, CinemaCamera, CinemaLens,
+    CinemaLighting, CinemaStudio, CinemaStudioRequest, CompiledCinemaPrompt,
 };
 pub use image::{ImageStudio, ImageStudioRequest};
 pub use lipsync::{LipSyncStudio, LipSyncStudioRequest};
