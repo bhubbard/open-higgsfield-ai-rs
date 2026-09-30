@@ -1,6 +1,6 @@
 [package]
 name = "open-higgsfield-ai"
-version = "0.0.1"
+version = "0.1.0"
 edition = "2021"
 authors = ["Brandon Hubbard <bhubbard@users.noreply.github.com>"]
 description = "Native Rust engine and studio client for Open-Higgsfield-AI: 220+ image, video, lipsync, and cinema camera models with Axum web studio and CLI."

@@ -71,6 +71,7 @@ impl HardwareProfile {
 }
 
 /// Local rendering and video assembly engine.
+#[derive(Debug, Clone, Copy, Default)]
 pub struct LocalEngine;
 
 impl LocalEngine {

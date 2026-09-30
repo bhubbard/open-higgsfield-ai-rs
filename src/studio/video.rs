@@ -15,6 +15,7 @@ pub struct VideoStudioRequest {
     pub image_url: Option<String>,
 }
 
+#[derive(Debug)]
 pub struct VideoStudio<'a> {
     client: &'a HiggsfieldClient,
     registry: &'static ModelRegistry,

@@ -14,6 +14,7 @@ pub struct LipSyncStudioRequest {
     pub seed: Option<i64>,
 }
 
+#[derive(Debug)]
 pub struct LipSyncStudio<'a> {
     client: &'a HiggsfieldClient,
     registry: &'static ModelRegistry,

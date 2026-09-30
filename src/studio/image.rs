@@ -19,6 +19,7 @@ pub struct ImageStudioRequest {
     pub images_list: Option<Vec<String>>,
 }
 
+#[derive(Debug)]
 pub struct ImageStudio<'a> {
     client: &'a HiggsfieldClient,
     registry: &'static ModelRegistry,

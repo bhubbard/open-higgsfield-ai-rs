@@ -423,6 +423,7 @@ pub fn build_nano_banana_prompt(
         .join(", ")
 }
 
+#[derive(Debug)]
 pub struct CinemaStudio<'a> {
     client: &'a HiggsfieldClient,
 }

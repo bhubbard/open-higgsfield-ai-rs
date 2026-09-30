@@ -21,7 +21,7 @@ use tracing::info;
 
 pub const STUDIO_HTML: &str = include_str!("../docs/index.html");
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct AppState {
     pub client: Option<Arc<HiggsfieldClient>>,
     pub registry: &'static ModelRegistry,
